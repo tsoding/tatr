@@ -427,7 +427,7 @@ bool ref_run(Command *self, const char *program_name, int argc, char **argv)
     // TASK(20260901-051338): Make the grep command configurable for `tatr-ref`
     cmd_append(&cmd, "grep");
     cmd_append(&cmd, "--exclude-dir=.git");
-    cmd_append(&cmd, "-rn");
+    cmd_append(&cmd, "-Irn");
     cmd_append(&cmd, huid);
     cmd_append(&cmd, path_render_cstr(&sb_path, rel_path));
     if (!cmd_run(&cmd)) return false;
