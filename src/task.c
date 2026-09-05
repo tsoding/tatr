@@ -42,23 +42,21 @@ void append_task_md_content(String_Builder *sb, Task task)
     sb_appendf(sb, "No description.\n");
 }
 
-void print_tags(Tags tags)
-{
-    for (size_t i = 0; i < tags.count; ++i) {
-        if (i > 0) printf(",");
-        printf(SV_Fmt, SV_Arg(tags.items[i]));
-    }
-}
-
 void print_task(const char *rel_path, Task *task)
 {
-    if (task->tags.count) {
-        printf("%s/%s/TASK.md:1: [PRIORITY: %-3d, TAGS: ", rel_path, task->id, task->priority);
-        print_tags(task->tags);
-        printf("] "SV_Fmt"\n", SV_Arg(task->title));
-    } else {
-        printf("%s/%s/TASK.md:1: [PRIORITY: %-3d] "SV_Fmt"\n", rel_path, task->id, task->priority, SV_Arg(task->title));
+    printf("%s/%s/TASK.md:1:", rel_path, task->id); // Location
+    printf(" "SV_Fmt, SV_Arg(task->status));        // Status
+    printf(" [PRIORITY: %3d]", task->priority);     // Priority
+    if (task->tags.count) {                         // Tags
+        printf(" [");
+        for (size_t i = 0; i < task->tags.count; ++i) {
+            if (i > 0) printf(",");
+            printf(SV_Fmt, SV_Arg(task->tags.items[i]));
+        }
+        printf("]");
     }
+    printf(" "SV_Fmt, SV_Arg(task->title));         // Title
+    printf("\n");
 }
 
 bool load_tasks(Tasks *tasks, const char *dir_path)
