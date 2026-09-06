@@ -50,6 +50,10 @@ The format of `TASK.md`:
 [description]
 ```
 
+The `STATUS` property defines whether the task is done or not. There could be only two statuses. If you need more it is generally recommended to use `TAGS` for whatever you are trying to do.
+
+The `PRIORITY` is generally used for sorting the tasks by the external tools. One thing I've seen people online do is stressing out about what priority to put. Don't think of priority as an absolute value. Think of it as the means of getting your list of tasks sorted in a specific way you want them to see.
+
 The `TAGS` property contains the list of tags separated by commas and whitespaces. `TAGS: foo,bar,baz` defines 3 tags. `TAGS: foo, hello  world` also defines 3 tags. You can use these tags to group tasks into categories. Like `bug` or `enhancement`.
 
 As you work on the task feel free to append any discovered details about the task to the description.
