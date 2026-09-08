@@ -186,7 +186,15 @@ bool ls_run(Command *self, const char *program_name, int argc, char **argv)
 
     Tasks tasks = {0};
     if (!load_tasks(&tasks, dir_path)) return false;
-    qsort(tasks.items, tasks.count, sizeof(*tasks.items), task_sorter(by_id, ascending));
+    qsort(tasks.items, tasks.count, sizeof(*tasks.items), task_sorter(by_id));
+    if (ascending) {
+        for (size_t i = 0; i < tasks.count/2; ++i) {
+            size_t j = tasks.count - 1 - i;
+            Task t = tasks.items[i];
+            tasks.items[i] = tasks.items[j];
+            tasks.items[j] = t;
+        }
+    }
 
     Stack stack = {0};
 

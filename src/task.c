@@ -117,13 +117,6 @@ defer:
     return result;
 }
 
-int task_compare_id(const void *a, const void *b)
-{
-    const Task *ta = a;
-    const Task *tb = b;
-    return strcmp(ta->id, tb->id);
-}
-
 int task_compare_id_reverse(const void *a, const void *b)
 {
     const Task *ta = a;
@@ -138,27 +131,12 @@ int task_compare_priority_reverse(const void *a, const void *b)
     return tb->priority - ta->priority;
 }
 
-int task_compare_priority(const void *a, const void *b)
-{
-    const Task *ta = a;
-    const Task *tb = b;
-    return ta->priority - tb->priority;
-}
-
-Task_Compare task_sorter(bool by_id, bool ascending)
+Task_Compare task_sorter(bool by_id)
 {
     if (by_id) {
-        if (ascending) {
-            return task_compare_id;
-        } else {
-            return task_compare_id_reverse;
-        }
+        return task_compare_id_reverse;
     } else {
-        if (ascending) {
-            return task_compare_priority;
-        } else {
-            return task_compare_priority_reverse;
-        }
+        return task_compare_priority_reverse;
     }
     UNREACHABLE("task_sorter");
     return NULL;

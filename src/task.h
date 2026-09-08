@@ -46,6 +46,6 @@ bool load_tasks(Tasks *tasks, const char *dir_path);
 
 typedef int (*Task_Compare)(const void *a, const void *b);
 
-Task_Compare task_sorter(bool by_id, bool ascending);
+Task_Compare task_sorter(bool by_id);
 
 #endif // TASK_H_

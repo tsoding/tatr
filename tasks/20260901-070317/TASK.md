@@ -1,8 +1,8 @@
 # Ascending order with `tatr ls -a` does not actually reverse the result
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
-- TAGS: scope,bug
+- TAGS: bug
 
 ![2026-09-01-140226_937x249_scrot.png](2026-09-01-140226_937x249_scrot.png)
 
