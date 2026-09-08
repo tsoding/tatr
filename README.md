@@ -1,5 +1,13 @@
 # Task Tracker
 
+<p align=center>
+  <img src="./cover/cover-512.png" width=512>
+</p>
+
+<p align=center>
+  <sub>Cover by <a href="https://github.com/rexim">rexim</a></sub>
+</p>
+
 This is an improvised Tasks system, because I needed something more powerful than just plane TODOs in the Source Code of my projects, yet I didn't want to install a full blown Issue Tracker System.
 
 ## The Spec
@@ -170,3 +178,5 @@ Since brackets have a special meaning in TQL, if you have any tags that contain 
 ## The License
 
 All the code in this repo is released under [GNU General Public License, version 2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html) license unless stated otherwise (specifically, the files in [./thirdparty/](./thirdparty/) folder have their own corresponding licenses)
+
+The cover art in the [./cover/](./cover/) folder is under the [CC BY-NC](https://creativecommons.org/licenses/by-nc/4.0/).
