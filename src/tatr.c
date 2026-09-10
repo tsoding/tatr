@@ -104,8 +104,10 @@ void print_command_usage(Command *command, const char *program_name, void *c)
 bool init_run(Command *self, const char *program_name, int argc, char **argv)
 {
     bool help = false;
+    bool no_readme = false;
     void *c = flag_c_new(program_name);
     flag_c_bool_var(c, &help, "help", false, "Print this help message");
+    flag_c_bool_var(c, &no_readme, "no-readme", false, "Do not create default README.md in the ./tasks/ folder");
 
     if (!flag_c_parse(c, argc, argv)) {
         print_command_usage(self, program_name, c);
@@ -118,7 +120,17 @@ bool init_run(Command *self, const char *program_name, int argc, char **argv)
         return true;
     }
 
-    if (!mkdir_if_not_exists("./tasks/")) return false;
+    const char *tasks_dir = "./tasks/";
+    const char *tasks_readme_md_file = "./tasks/README.md";
+
+    if (!file_exists(tasks_dir)) {
+        if (!mkdir_if_not_exists(tasks_dir)) return false;
+    }
+
+    if (!file_exists(tasks_readme_md_file) && !no_readme) {
+        if (!write_entire_file(tasks_readme_md_file, TASKS_README_MD, ARRAY_LEN(TASKS_README_MD))) return false;
+        nob_log(INFO, "created %s", tasks_readme_md_file);
+    }
 
     return true;
 }

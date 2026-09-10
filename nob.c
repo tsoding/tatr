@@ -344,15 +344,15 @@ int main(int argc, char **argv)
 
     if (!mkdir_if_not_exists(BUILD_FOLDER)) return 1;
 
+    String_Builder sb_build_h = {0};
+    sb_appendf(&sb_build_h, "#ifndef BUILD_H_\n");
+    sb_appendf(&sb_build_h, "#define BUILD_H_\n");
+
     // TASK(20260901-051445): If git state is dirty the baked git hash should indicate that
     cmd_append(&cmd, "git");
     cmd_append(&cmd, "rev-parse");
     cmd_append(&cmd, "HEAD");
     if (!cmd_run(&cmd, .stdout_path = BUILD_FOLDER"git_hash.txt")) return 1;
-
-    String_Builder sb_build_h = {0};
-    sb_appendf(&sb_build_h, "#ifndef BUILD_H_\n");
-    sb_appendf(&sb_build_h, "#define BUILD_H_\n");
     sb_appendf(&sb_build_h, "#define GIT_HASH \"");
     if (!read_entire_file(BUILD_FOLDER"git_hash.txt", &sb_build_h)) return 1;
     while (sb_build_h.count > 0 && isspace(da_last(&sb_build_h))) {
@@ -360,9 +360,22 @@ int main(int argc, char **argv)
     }
     sb_appendf(&sb_build_h, "\"\n");
 
-
     sb_appendf(&sb_build_h, "#define BUILD_TIME \"%s\"\n", get_current_date());
+
+    String_Builder sb_tasks_readme_md = {0};
+    if (!read_entire_file("tasks/README.md", &sb_tasks_readme_md)) return 1;
+    sb_appendf(&sb_build_h, "unsigned char TASKS_README_MD[] = {\n");
+    for (size_t i = 0; i < sb_tasks_readme_md.count;) {
+        sb_appendf(&sb_build_h, "    ");
+        for (size_t j = 0; i < sb_tasks_readme_md.count && j < 20; ++i, ++j) {
+            sb_appendf(&sb_build_h, "0x%02X,", sb_tasks_readme_md.items[i]);
+        }
+        sb_appendf(&sb_build_h, "\n");
+    }
+    sb_appendf(&sb_build_h, "};\n");
+
     sb_appendf(&sb_build_h, "#endif // BUILD_H_\n");
+
     if (!write_entire_file(BUILD_FOLDER"build.h", sb_build_h.items, sb_build_h.count)) return 1;
 
     cc(&cmd, compiler);
