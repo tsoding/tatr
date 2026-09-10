@@ -2,9 +2,7 @@
 
 This folder contains tasks as defined by the specificiation of [Tatr](https://github.com/tsoding/tatr).
 
-<p align=center>
-  <img src="https://raw.githubusercontent.com/tsoding/tatr/main/cover/cover-512.png" width=512>
-</p>
+<img src="https://raw.githubusercontent.com/tsoding/tatr/main/cover/cover-512.png" width=512>
 
 ## Quick Start on Linux
 
