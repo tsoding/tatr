@@ -14,5 +14,6 @@ $ cd tatr
 $ cc -o nob nob.c
 $ ./nob
 $ sudo cp ./build/tatr /usr/local/bin/
-$ tatr help
 ```
+
+After that run `tatr ls` anywhere within this repo to get the list of currently opened tasks. Use `tatr help` to list all the available subcommands of the tool.
