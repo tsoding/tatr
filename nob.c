@@ -299,6 +299,8 @@ const char *get_current_date(void)
     return sb.items;
 }
 
+bool make_build_h(Compiler compiler);
+
 int main(int argc, char **argv)
 {
     GO_REBUILD_URSELF(argc, argv);
@@ -344,39 +346,7 @@ int main(int argc, char **argv)
 
     if (!mkdir_if_not_exists(BUILD_FOLDER)) return 1;
 
-    String_Builder sb_build_h = {0};
-    sb_appendf(&sb_build_h, "#ifndef BUILD_H_\n");
-    sb_appendf(&sb_build_h, "#define BUILD_H_\n");
-
-    // TASK(20260901-051445): If git state is dirty the baked git hash should indicate that
-    cmd_append(&cmd, "git");
-    cmd_append(&cmd, "rev-parse");
-    cmd_append(&cmd, "HEAD");
-    if (!cmd_run(&cmd, .stdout_path = BUILD_FOLDER"git_hash.txt")) return 1;
-    sb_appendf(&sb_build_h, "#define GIT_HASH \"");
-    if (!read_entire_file(BUILD_FOLDER"git_hash.txt", &sb_build_h)) return 1;
-    while (sb_build_h.count > 0 && isspace(da_last(&sb_build_h))) {
-        da_pop(&sb_build_h);
-    }
-    sb_appendf(&sb_build_h, "\"\n");
-
-    sb_appendf(&sb_build_h, "#define BUILD_TIME \"%s\"\n", get_current_date());
-
-    String_Builder sb_tasks_readme_md = {0};
-    if (!read_entire_file("tasks/README.md", &sb_tasks_readme_md)) return 1;
-    sb_appendf(&sb_build_h, "unsigned char TASKS_README_MD[] = {\n");
-    for (size_t i = 0; i < sb_tasks_readme_md.count;) {
-        sb_appendf(&sb_build_h, "    ");
-        for (size_t j = 0; i < sb_tasks_readme_md.count && j < 20; ++i, ++j) {
-            sb_appendf(&sb_build_h, "0x%02X,", sb_tasks_readme_md.items[i]);
-        }
-        sb_appendf(&sb_build_h, "\n");
-    }
-    sb_appendf(&sb_build_h, "};\n");
-
-    sb_appendf(&sb_build_h, "#endif // BUILD_H_\n");
-
-    if (!write_entire_file(BUILD_FOLDER"build.h", sb_build_h.items, sb_build_h.count)) return 1;
+    if (!make_build_h(compiler)) return 1;
 
     cc(&cmd, compiler);
     cmd_append(&cmd, "-o", BUILD_FOLDER"tatr");
@@ -408,4 +378,74 @@ int main(int argc, char **argv)
     }
 
     return 0;
+}
+
+bool make_build_h(Compiler compiler)
+{
+    Cmd cmd = {0};
+    String_Builder sb_build_h = {0};
+    sb_appendf(&sb_build_h, "#ifndef BUILD_H_\n");
+    sb_appendf(&sb_build_h, "#define BUILD_H_\n");
+
+    // TASK(20260901-051445): If git state is dirty the baked git hash should indicate that
+    cmd_append(&cmd, "git");
+    cmd_append(&cmd, "rev-parse");
+    cmd_append(&cmd, "--short");
+    cmd_append(&cmd, "HEAD");
+    if (cmd_run(&cmd, .stdout_path = BUILD_FOLDER"git_hash.txt")) {
+        sb_appendf(&sb_build_h, "#define GIT_HASH \"");
+        if (!read_entire_file(BUILD_FOLDER"git_hash.txt", &sb_build_h)) return false;
+        while (sb_build_h.count > 0 && isspace(da_last(&sb_build_h))) {
+            da_pop(&sb_build_h);
+        }
+        sb_appendf(&sb_build_h, "\"\n");
+    } else {
+        nob_log(WARNING, "git hash will not be included in `tatr-version`");
+    }
+
+    String_Builder sb_compiler_version_txt = {0};
+    static_assert(__compiler_count == 4, "Amount of compilers have changed");
+    switch (compiler) {
+    case CC:    cmd_append(&cmd, "cc",    "--version"); break;
+    case GCC:   cmd_append(&cmd, "gcc",   "--version"); break;
+    case CLANG: cmd_append(&cmd, "clang", "--version"); break;
+    case TCC:   cmd_append(&cmd, "tcc",   "--version"); break;
+    case __compiler_count:
+    default:
+        UNREACHABLE("Compiler");
+    }
+    if (cmd_run(&cmd, .stdout_path = BUILD_FOLDER"compiler-version.txt")) {
+        if (!read_entire_file(BUILD_FOLDER"compiler-version.txt", &sb_compiler_version_txt)) return false;
+        String_View compiler_version_txt = sb_to_sv(sb_compiler_version_txt);
+        String_View compiler_version = sv_chop_by_delim(&compiler_version_txt, '\n');
+        sb_appendf(&sb_build_h, "#define COMPILER_VERSION \""SV_Fmt"\"\n", SV_Arg(compiler_version));
+    } else {
+        nob_log(WARNING, "compiler version will not be included in `tatr-version`");
+    }
+
+    sb_appendf(&sb_build_h, "#define BUILD_TIME \"%s\"\n", get_current_date());
+
+    const char *tasks_readme_md_file = "tasks/README.md";
+    if (file_exists(tasks_readme_md_file)) {
+        String_Builder sb_tasks_readme_md = {0};
+        if (!read_entire_file(tasks_readme_md_file, &sb_tasks_readme_md)) return false;
+        sb_appendf(&sb_build_h, "unsigned char tasks_readme_md[] = {\n");
+        for (size_t i = 0; i < sb_tasks_readme_md.count;) {
+            sb_appendf(&sb_build_h, "    ");
+            for (size_t j = 0; i < sb_tasks_readme_md.count && j < 20; ++i, ++j) {
+                sb_appendf(&sb_build_h, "0x%02X,", sb_tasks_readme_md.items[i]);
+            }
+            sb_appendf(&sb_build_h, "\n");
+        }
+        sb_appendf(&sb_build_h, "};\n");
+        sb_appendf(&sb_build_h, "#define TASKS_README_MD tasks_readme_md\n");
+    } else {
+        nob_log(WARNING, "%s file doesn't exist. `tatr-init` will not create it along with the tasks/ folder", tasks_readme_md_file);
+    }
+
+    sb_appendf(&sb_build_h, "#endif // BUILD_H_\n");
+
+    if (!write_entire_file(BUILD_FOLDER"build.h", sb_build_h.items, sb_build_h.count)) return false;
+    nob_log(INFO, "Generated "BUILD_FOLDER"build.h");
+    return true;
 }

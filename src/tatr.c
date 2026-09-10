@@ -107,7 +107,11 @@ bool init_run(Command *self, const char *program_name, int argc, char **argv)
     bool no_readme = false;
     void *c = flag_c_new(program_name);
     flag_c_bool_var(c, &help, "help", false, "Print this help message");
+#ifdef TASKS_README_MD
     flag_c_bool_var(c, &no_readme, "no-readme", false, "Do not create default README.md in the ./tasks/ folder");
+#else
+    flag_c_bool_var(c, &no_readme, "no-readme", false, "Doesn't do anything");
+#endif // TASKS_README_MD
 
     if (!flag_c_parse(c, argc, argv)) {
         print_command_usage(self, program_name, c);
@@ -121,16 +125,17 @@ bool init_run(Command *self, const char *program_name, int argc, char **argv)
     }
 
     const char *tasks_dir = "./tasks/";
-    const char *tasks_readme_md_file = "./tasks/README.md";
-
     if (!file_exists(tasks_dir)) {
         if (!mkdir_if_not_exists(tasks_dir)) return false;
     }
 
+#ifdef TASKS_README_MD
+    const char *tasks_readme_md_file = "./tasks/README.md";
     if (!file_exists(tasks_readme_md_file) && !no_readme) {
         if (!write_entire_file(tasks_readme_md_file, TASKS_README_MD, ARRAY_LEN(TASKS_README_MD))) return false;
         nob_log(INFO, "created %s", tasks_readme_md_file);
     }
+#endif // TASKS_README_MD
 
     return true;
 }
@@ -673,9 +678,17 @@ bool version_run(Command *self, const char *program_name, int argc, char **argv)
     UNUSED(program_name);
     UNUSED(argc);
     UNUSED(argv);
-    printf("tatr - Task Tracker\n");
-    printf("Built at %s\n", BUILD_TIME);
-    printf("GIT HASH: "GIT_HASH"\n");
+#ifdef GIT_HASH
+    printf("tatr commit "GIT_HASH"\n");
+#else
+    printf("tatr\n");
+#endif // GIT_HASH
+#ifdef BUILD_TIME
+    printf("Build time: %s\n", BUILD_TIME);
+#endif // BUILD_TIME
+#ifdef COMPILER_VERSION
+    printf("Compiler: %s\n", COMPILER_VERSION);
+#endif // COMPILER_VERSION
     return true;
 }
 
@@ -752,6 +765,9 @@ bool help_run(Command *self, const char *program_name, int argc, char **argv)
     UNUSED(program_name);
     UNUSED(argc);
     UNUSED(argv);
+    // TASK(20260910-113917): Not sure why we use nob_log for reporting useful info to the user
+    nob_log(INFO, "tatr - Task Tracker");
+    nob_log(INFO, "Usage: %s <command> [OPTIONS]", program_name);
     print_available_commands(INFO);
     return true;
 }

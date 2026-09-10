@@ -1,7 +1,7 @@
 # Bake the compiler version into `tatr-version`
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 100
-- TAGS: scope
+- TAGS:
 
 No description.
