@@ -30,6 +30,8 @@ typedef struct {
     String_View status;
     Tags tags;
     int priority;
+    Properties properties;
+    String_View body;
     String_View task_md_content;
 } Task;
 

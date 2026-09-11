@@ -63,7 +63,6 @@ bool load_tasks(Tasks *tasks, const char *dir_path)
 {
     bool result = true;
     File_Paths children = {0};
-    Properties ps = { .hasheq = ht_sv_hasheq };
 
     if (!read_entire_dir(dir_path, &children)) return_defer(false);
     size_t checkpoint = temp_save();
@@ -88,32 +87,29 @@ bool load_tasks(Tasks *tasks, const char *dir_path)
         if (!read_entire_file(task_md_path, &sb_content)) return_defer(false);
         sb_append_null(&sb_content);
 
-        ht_reset(&ps);
-        *ht_put(&ps, SVLIT("STATUS"))   = SVLIT("OPEN");   // Task is open until explicitly stated otherwise
-        *ht_put(&ps, SVLIT("PRIORITY")) = SVLIT("999999"); // Unset priority is high so you don't forget to set it
-        *ht_put(&ps, SVLIT("TAGS"))     = SVLIT("");       // No tags by default
-
-        String_View title = {0};
-        task_md_parse(sb_content.items, &title, &ps);
-
-        String_View status   = *ht_find(&ps, SVLIT("STATUS"));
-        String_View priority = *ht_find(&ps, SVLIT("PRIORITY"));
-        Tags tags = {0};
-        parse_tags(&tags, *ht_find(&ps, SVLIT("TAGS")));
-
-        da_append(tasks, ((Task) {
-            .id              = strdup(id),
-            .title           = title,
-            .status          = status,
-            .priority        = atoi(temp_sv_to_cstr(priority)),
-            .tags            = tags,
+        Task task = {
+            .id = strdup(id),
             .task_md_content = sb_to_sv(sb_content),
-        }));
+            .properties = {
+                .hasheq = ht_sv_hasheq,
+            },
+        };
+
+        ht_reset(&task.properties);
+        *ht_put(&task.properties, SVLIT("STATUS"))   = SVLIT("OPEN");   // Task is open until explicitly stated otherwise
+        *ht_put(&task.properties, SVLIT("PRIORITY")) = SVLIT("999999"); // Unset priority is high so you don't forget to set it
+        *ht_put(&task.properties, SVLIT("TAGS"))     = SVLIT("");       // No tags by default
+
+        task_md_parse(sb_content.items, &task.title, &task.properties, &task.body);
+        task.status   = *ht_find(&task.properties, SVLIT("STATUS"));
+        task.priority = atoi(temp_sv_to_cstr(*ht_find(&task.properties, SVLIT("PRIORITY"))));
+        parse_tags(&task.tags, *ht_find(&task.properties, SVLIT("TAGS")));
+
+        da_append(tasks, task);
     }
 
 defer:
     free(children.items);
-    ht_free(&ps);
     return result;
 }
 

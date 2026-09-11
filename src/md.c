@@ -130,10 +130,11 @@ void task_md_extract_properties(Md *md, Properties *ps)
     UNREACHABLE("task_md_extract_properties");
 }
 
-void task_md_parse(char *task_md_content, String_View *title, Properties *ps)
+void task_md_parse(char *task_md_content, String_View *title, Properties *ps, String_View *body)
 {
     Md md = { .source = task_md_content };
     if (task_md_extract_title(&md, title)) {
         task_md_extract_properties(&md, ps);
+        *body = sv_from_cstr(md_cstr(&md));
     }
 }

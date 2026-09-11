@@ -140,6 +140,127 @@ bool init_run(Command *self, const char *program_name, int argc, char **argv)
     return true;
 }
 
+void render_task_md(Task task, String_Builder *sb)
+{
+    sb_appendf(sb, "# "SV_Fmt"\n", SV_Arg(task.title));
+    sb_appendf(sb, "\n");
+    ht_foreach(value, &task.properties) {
+        String_View key = ht_key(&task.properties, value);
+        if (sv_eq(key, SVLIT("TAGS"))) {
+            sb_appendf(sb, "- TAGS: ");
+            bool first = true;
+            da_foreach(String_View, tag, &task.tags) {
+                if (!first) sb_appendf(sb, ",");
+                sb_appendf(sb, SV_Fmt, SV_Arg(*tag));
+                first = false;
+            }
+            sb_appendf(sb, "\n");
+        } else if (sv_eq(key, SVLIT("STATUS"))) {
+            sb_appendf(sb, "- STATUS: "SV_Fmt"\n", SV_Arg(task.status));
+        } else if (sv_eq(key, SVLIT("PRIORITY"))) {
+            sb_appendf(sb, "- PRIORITY: %d\n", task.priority);
+        } else {
+            sb_appendf(sb, "- "SV_Fmt": "SV_Fmt"\n", SV_Arg(key), SV_Arg(*value));
+        }
+    }
+    sb_appendf(sb, SV_Fmt, SV_Arg(task.body));
+}
+
+bool untag_run(Command *self, const char *program_name, int argc, char **argv)
+{
+    String_Builder query_src = {0};
+    Flag_List tags_to_remove = {0};
+    bool help = false;
+    bool closed = false;
+
+    void *c = flag_c_new(program_name);
+    flag_c_list_var(c, &tags_to_remove, "t", "Tags to remove from the tasks");
+    flag_c_bool_var(c, &closed, "c", false, "List closed tasks");
+    flag_c_bool_var(c, &help, "help", false, "Print this help message");
+
+    if (!flag_c_parse(c, argc, argv)) {
+        print_command_usage(self, program_name, c);
+        flag_c_print_error(c, stderr);
+        return false;
+    }
+
+    argc = flag_c_rest_argc(c);
+    argv = flag_c_rest_argv(c);
+
+    if (help) {
+        print_command_usage(self, program_name, c);
+        return true;
+    }
+
+    if (argc <= 0) {
+        fprintf(stderr, "ERROR: no query is provided\n");
+        return false;
+    }
+
+    while (argc > 0) {
+        if (query_src.count > 0) sb_append(&query_src, ' ');
+        sb_append_cstr(&query_src, shift(argv, argc));
+    }
+
+    String_View src = sv_trim(sb_to_sv(query_src));
+    String_View original_src = src;
+    Query query = {0};
+    if (!compile_query(original_src, &src, &query)) return false;
+
+    char *dir_path = find_relative_tasks_directory();
+    if (!dir_path) return false;
+
+    Tasks tasks = {0};
+    if (!load_tasks(&tasks, dir_path)) return false;
+
+    Stack stack = {0};
+
+    size_t tasks_updated = 0;
+    da_foreach(Task, task, &tasks) {
+        if (closed) {
+            if (!sv_eq(task->status, SVLIT("CLOSED"))) continue;
+        } else {
+            if (sv_eq(task->status, SVLIT("CLOSED"))) continue;
+        }
+        switch (task_matches_query(original_src, task, query, &stack)) {
+        case TMR_MATCHED:    break;
+        case TMR_MISMATCHED: continue;
+        case TMR_ERROR:      return false;
+        default:             UNREACHABLE("Task_Match_Result");
+        }
+
+        bool updated = false;
+        for (size_t i = 0; i < task->tags.count; ) {
+            bool remove = false;
+            for (size_t j = 0; !remove && j < tags_to_remove.count; ++j) {
+                if (sv_eq(task->tags.items[i], sv_from_cstr(tags_to_remove.items[j]))) {
+                    remove = true;
+                }
+            }
+            if (remove) {
+                updated = true;
+                da_remove_unordered(&task->tags, i);
+            } else {
+                i += 1;
+            }
+        }
+
+        if (updated) {
+            String_Builder sb = {0};
+            render_task_md(*task, &sb);
+            if (!write_entire_file(temp_sprintf("%s/%s/TASK.md", dir_path, task->id), sb.items, sb.count)) {
+                return false;
+            }
+
+            tasks_updated += 1;
+        }
+    }
+
+    nob_log(INFO, "%zu tasks updated", tasks_updated);
+
+    return true;
+}
+
 bool ls_run(Command *self, const char *program_name, int argc, char **argv)
 {
     bool closed = false;
@@ -181,6 +302,7 @@ bool ls_run(Command *self, const char *program_name, int argc, char **argv)
     Query query = {0};
     if (!compile_query(original_src, &src, &query)) return false;
 
+    // TASK(20260910-181239): `tatr ls -debug` should be a separate command
     if (debug) {
         printf("TOKENS:\n");
         src = sv_trim(sb_to_sv(query_src));
@@ -732,6 +854,12 @@ Command commands[] = {
         .name = "graph",
         .description = "Generate graph of tasks cross-referring to each other. This command is largely useless right now.",
         .run = graph_run,
+    },
+    {
+        .name = "untag",
+        .description = "Untag all the tasks filtered by a query",
+        .signature = "[OPTIONS] [QUERY]",
+        .run = untag_run,
     },
     {
         .name = "help",

@@ -19,6 +19,6 @@
 
 typedef Ht(String_View, String_View) Properties;
 
-void task_md_parse(char *task_md_content, String_View *title, Properties *ps);
+void task_md_parse(char *task_md_content, String_View *title, Properties *ps, String_View *body);
 
 #endif // MD_H_
