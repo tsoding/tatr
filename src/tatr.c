@@ -679,7 +679,7 @@ bool version_run(Command *self, const char *program_name, int argc, char **argv)
     UNUSED(argc);
     UNUSED(argv);
 #ifdef GIT_HASH
-    printf("tatr commit "GIT_HASH"\n");
+    printf("tatr commit %s\n", GIT_HASH);
 #else
     printf("tatr\n");
 #endif // GIT_HASH
