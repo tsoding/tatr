@@ -90,20 +90,16 @@ bool load_tasks(Tasks *tasks, const char *dir_path)
         Task task = {
             .id = strdup(id),
             .task_md_content = sb_to_sv(sb_content),
-            .properties = {
-                .hasheq = ht_sv_hasheq,
-            },
         };
 
-        ht_reset(&task.properties);
-        *ht_put(&task.properties, SVLIT("STATUS"))   = SVLIT("OPEN");   // Task is open until explicitly stated otherwise
-        *ht_put(&task.properties, SVLIT("PRIORITY")) = SVLIT("999999"); // Unset priority is high so you don't forget to set it
-        *ht_put(&task.properties, SVLIT("TAGS"))     = SVLIT("");       // No tags by default
+        properties_put(&task.properties, SVLIT("STATUS"),   SVLIT("OPEN"));   // Task is open until explicitly stated otherwise
+        properties_put(&task.properties, SVLIT("PRIORITY"), SVLIT("999999")); // Unset priority is high so you don't forget to set it
+        properties_put(&task.properties, SVLIT("TAGS"),     SVLIT(""));       // No tags by default
 
         task_md_parse(sb_content.items, &task.title, &task.properties, &task.body);
-        task.status   = *ht_find(&task.properties, SVLIT("STATUS"));
-        task.priority = atoi(temp_sv_to_cstr(*ht_find(&task.properties, SVLIT("PRIORITY"))));
-        parse_tags(&task.tags, *ht_find(&task.properties, SVLIT("TAGS")));
+        task.status   = properties_get(&task.properties, SVLIT("STATUS"));
+        task.priority = atoi(temp_sv_to_cstr(properties_get(&task.properties, SVLIT("PRIORITY"))));
+        parse_tags(&task.tags, properties_get(&task.properties, SVLIT("TAGS")));
 
         da_append(tasks, task);
     }

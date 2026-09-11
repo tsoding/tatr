@@ -122,7 +122,7 @@ void task_md_extract_properties(Md *md, Properties *ps)
         }
 
         String_View value = sv_trim(md_chop_until_newline(md));
-        *ht_find_or_put(ps, key) = value;
+        properties_put(ps, key, value);
 
         md_expect_char(md, '\n');
     }
@@ -137,4 +137,28 @@ void task_md_parse(char *task_md_content, String_View *title, Properties *ps, St
         task_md_extract_properties(&md, ps);
         *body = sv_from_cstr(md_cstr(&md));
     }
+}
+
+void properties_put(Properties *ps, String_View key, String_View value)
+{
+    da_foreach(Property, p, ps) {
+        if (sv_eq(p->key, key)) {
+            p->value = value;
+            return;
+        }
+    }
+    da_append(ps, ((Property) {
+        .key   = key,
+        .value = value,
+    }));
+}
+
+String_View properties_get(Properties *ps, String_View key)
+{
+    da_foreach(Property, p, ps) {
+        if (sv_eq(p->key, key)) {
+            return p->value;
+        }
+    }
+    return (String_View){0};
 }

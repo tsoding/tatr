@@ -2,7 +2,7 @@
 
 - STATUS: OPEN
 - PRIORITY: 110
-- TAGS:
+- TAGS: scope
 
 Adding everything with priority 100 and higher to the scope:
 
@@ -24,3 +24,7 @@ $ tatr close .bug
 
 Only these commands for now. In the future we may add more as part of
 separate tasks.
+
+---
+
+We implemented `tatr-untag` but it's currently rather bad at keeping the original order of the properties.

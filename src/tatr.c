@@ -144,9 +144,8 @@ void render_task_md(Task task, String_Builder *sb)
 {
     sb_appendf(sb, "# "SV_Fmt"\n", SV_Arg(task.title));
     sb_appendf(sb, "\n");
-    ht_foreach(value, &task.properties) {
-        String_View key = ht_key(&task.properties, value);
-        if (sv_eq(key, SVLIT("TAGS"))) {
+    da_foreach(Property, property, &task.properties) {
+        if (sv_eq(property->key, SVLIT("TAGS"))) {
             sb_appendf(sb, "- TAGS: ");
             bool first = true;
             da_foreach(String_View, tag, &task.tags) {
@@ -155,12 +154,12 @@ void render_task_md(Task task, String_Builder *sb)
                 first = false;
             }
             sb_appendf(sb, "\n");
-        } else if (sv_eq(key, SVLIT("STATUS"))) {
+        } else if (sv_eq(property->key, SVLIT("STATUS"))) {
             sb_appendf(sb, "- STATUS: "SV_Fmt"\n", SV_Arg(task.status));
-        } else if (sv_eq(key, SVLIT("PRIORITY"))) {
+        } else if (sv_eq(property->key, SVLIT("PRIORITY"))) {
             sb_appendf(sb, "- PRIORITY: %d\n", task.priority);
         } else {
-            sb_appendf(sb, "- "SV_Fmt": "SV_Fmt"\n", SV_Arg(key), SV_Arg(*value));
+            sb_appendf(sb, "- "SV_Fmt": "SV_Fmt"\n", SV_Arg(property->key), SV_Arg(property->value));
         }
     }
     sb_appendf(sb, SV_Fmt, SV_Arg(task.body));
