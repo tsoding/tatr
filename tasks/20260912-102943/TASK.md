@@ -2,9 +2,7 @@
 
 - STATUS: CLOSED
 - FOO: BAR
-- PRIORITY: 100
-- DUPLICATE: 69
-- TAGS: scope,foo,bar
+- TAGS: bar,foo
 - DUPLICATE: 420
 - PRIORITY: 110
 

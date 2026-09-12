@@ -2,7 +2,7 @@
 
 - STATUS: CLOSED
 - PRIORITY: 120
-- TAGS: scope,stream
+- TAGS: stream
 
 ## Scope of the task
 
