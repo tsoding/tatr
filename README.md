@@ -71,7 +71,7 @@ The `PRIORITY` is generally used for sorting the tasks by the external tools. On
 
 The `TAGS` property contains the list of tags separated by commas and whitespaces. `TAGS: foo,bar,baz` defines 3 tags. `TAGS: foo,,, hello  world` also defines 3 tags. You can use these tags to group tasks into categories. Like `bug` or `enhancement`.
 
-We allow to specify `[other properties]` (in addition to `STATUS`, `PRIORITY`, and `TAGS`) in a similar format (that is `- [NAME]: VALUE`), the official tool will ignore them but try its best to not disturb them too much during any mass update operations (like `tatr-untag`, etc).
+We allow to specify `[other properties]` (in addition to `STATUS`, `PRIORITY`, and `TAGS`) in a similar format (that is `- [NAME]: [VALUE]`), the official tool will ignore them but try its best to not disturb them too much during any mass update operations (like `tatr-untag`, etc).
 
 Duplicated properties are not allowed. If a tasks specifies duplicated properties only the last value must be taken into account. Mass update operations of the official tool will remove any duplicated properties.
 

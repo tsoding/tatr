@@ -27,22 +27,6 @@ $ tatr close .bug
 Only these commands for now. In the future we may add more as part of
 separate tasks.
 
-## Single task update
-
-It feels like sometimes these operations should be able to work on a single task too.
-
-Like I wanna be able to do:
-
-```console
-$ tatr close 20260912-102943
-```
-
-So we need to think how to accomdate this use case.
-
----
-
-I'm thinking about extending TQL with `OP_ID` which is compiled from a keyword that is a valid HUID. That is something like `20260912-102943` is a syntactically valid TQL query which matches one task with that exact ID.
-
 ## Keeping the properties intact as we are modifying them
 
 We implemented `tatr-untag` but it's currently rather bad at keeping the original order of the properties.
@@ -55,7 +39,7 @@ There is a little bit of a problem in here of keeping the parsed properties (`Ta
 
 I think I solved the syncing problem by making sure `STATUS`, `PRIORITY`, and `TAGS` are always present in the `Task.properties` and just giving `Task.status`, `Task.priority`, and `Task.tags` a priority over whatever is in `Task.properties`.
 
-It also helped a lot of with keep the original order of the properties
+It also helped a lot of with keeping the original order of the properties.
 
 ---
 
@@ -64,5 +48,7 @@ I'm still not sure how the whole system reacts to duplicated properties.
 ---
 
 Interestingly we never really defined well the format of the properties in general. So it's a rather a spec gap right now.
+
+---
 
 Added some info about `[other properties]` to The Spec.
