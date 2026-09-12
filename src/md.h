@@ -28,8 +28,8 @@ typedef struct {
     size_t capacity;
 } Properties;
 
-void properties_put(Properties *ps, String_View key, String_View value);
-String_View properties_get(Properties *ps, String_View key);
+String_View *properties_put(Properties *ps, String_View key, String_View value);
+String_View *properties_get(Properties *ps, String_View key);
 
 void task_md_parse(char *task_md_content, String_View *title, Properties *ps, String_View *body);
 

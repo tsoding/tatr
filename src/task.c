@@ -92,14 +92,28 @@ bool load_tasks(Tasks *tasks, const char *dir_path)
             .task_md_content = sb_to_sv(sb_content),
         };
 
-        properties_put(&task.properties, SVLIT("STATUS"),   SVLIT("OPEN"));   // Task is open until explicitly stated otherwise
-        properties_put(&task.properties, SVLIT("PRIORITY"), SVLIT("999999")); // Unset priority is high so you don't forget to set it
-        properties_put(&task.properties, SVLIT("TAGS"),     SVLIT(""));       // No tags by default
-
         task_md_parse(sb_content.items, &task.title, &task.properties, &task.body);
-        task.status   = properties_get(&task.properties, SVLIT("STATUS"));
-        task.priority = atoi(temp_sv_to_cstr(properties_get(&task.properties, SVLIT("PRIORITY"))));
-        parse_tags(&task.tags, properties_get(&task.properties, SVLIT("TAGS")));
+
+        String_View *status_value = properties_get(&task.properties, SVLIT("STATUS"));
+        if (!status_value) {
+            // Task is open until explicitly stated otherwise
+            status_value = properties_put(&task.properties, SVLIT("STATUS"), SVLIT("OPEN"));
+        }
+        task.status = *status_value;
+
+        String_View *priority_value = properties_get(&task.properties, SVLIT("PRIORITY"));
+        if (!priority_value) {
+            // Unset priority is super high so you don't forget to set it
+            priority_value = properties_put(&task.properties, SVLIT("PRIORITY"), SVLIT("999999"));
+        }
+        task.priority = atoi(temp_sv_to_cstr(*priority_value));
+
+        String_View *tags_value = properties_get(&task.properties, SVLIT("TAGS"));
+        if (!tags_value) {
+            // No tags by default
+            tags_value = properties_put(&task.properties, SVLIT("TAGS"), SVLIT(""));
+        }
+        parse_tags(&task.tags, *tags_value);
 
         da_append(tasks, task);
     }

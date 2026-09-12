@@ -139,26 +139,27 @@ void task_md_parse(char *task_md_content, String_View *title, Properties *ps, St
     }
 }
 
-void properties_put(Properties *ps, String_View key, String_View value)
+String_View *properties_put(Properties *ps, String_View key, String_View value)
 {
     da_foreach(Property, p, ps) {
         if (sv_eq(p->key, key)) {
             p->value = value;
-            return;
+            return &p->value;
         }
     }
     da_append(ps, ((Property) {
         .key   = key,
         .value = value,
     }));
+    return &da_last(ps).value;
 }
 
-String_View properties_get(Properties *ps, String_View key)
+String_View *properties_get(Properties *ps, String_View key)
 {
     da_foreach(Property, p, ps) {
         if (sv_eq(p->key, key)) {
-            return p->value;
+            return &p->value;
         }
     }
-    return (String_View){0};
+    return NULL;
 }

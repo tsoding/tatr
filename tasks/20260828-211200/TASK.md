@@ -34,3 +34,13 @@ We implemented `tatr-untag` but it's currently rather bad at keeping the origina
 ---
 
 There is a little bit of a problem in here of keeping the parsed properties (`Task.status`, `Task.priority`, and `Task.tags`) and the unparse properties (`Task.properties`) in sync.
+
+---
+
+I think I solved the syncing problem by making sure `STATUS`, `PRIORITY`, and `TAGS` are always present in the `Task.properties` and just giving `Task.status`, `Task.priority`, and `Task.tags` a priority over whatever is in `Task.properties`.
+
+It also helped a lot of with keep the original order of the properties
+
+---
+
+I'm still not sure how the whole system reacts to duplicated properties.
