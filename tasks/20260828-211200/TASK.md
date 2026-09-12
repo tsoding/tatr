@@ -44,3 +44,7 @@ It also helped a lot of with keep the original order of the properties
 ---
 
 I'm still not sure how the whole system reacts to duplicated properties.
+
+---
+
+Interestingly we never really defined well the format of the properties in general. So it's a rather a spec gap right now.
