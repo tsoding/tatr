@@ -141,10 +141,13 @@ void task_md_parse(char *task_md_content, String_View *title, Properties *ps, St
 
 String_View *properties_put(Properties *ps, String_View key, String_View value)
 {
-    da_foreach(Property, p, ps) {
-        if (sv_eq(p->key, key)) {
-            p->value = value;
-            return &p->value;
+    for (size_t i = 0; i < ps->count; ++i) {
+        if (sv_eq(ps->items[i].key, key)) {
+            for (; i + 1 < ps->count; ++i) {
+                ps->items[i] = ps->items[i+1];
+            }
+            ps->count -= 1;
+            break;
         }
     }
     da_append(ps, ((Property) {
