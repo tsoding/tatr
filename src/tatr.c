@@ -251,6 +251,7 @@ bool untag_run(Command *self, const char *program_name, int argc, char **argv)
         if (updated) {
             String_Builder sb = {0};
             render_task_md(*task, &sb);
+            // TASK(20260912-085629): `tatr-untag` must report each modification with a compiler style report pointing at the line where the `TAGS` property is located
             if (!write_entire_file(temp_sprintf("%s/%s/TASK.md", dir_path, task->id), sb.items, sb.count)) {
                 return false;
             }
