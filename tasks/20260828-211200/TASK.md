@@ -2,7 +2,7 @@
 
 - STATUS: OPEN
 - PRIORITY: 110
-- TAGS: scope
+- TAGS: scope,stream
 
 Adding everything with priority 100 and higher to the scope:
 
