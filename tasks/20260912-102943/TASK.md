@@ -1,6 +1,6 @@
 # Test task with custom properties for 20260828-211200
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - FOO: BAR
 - PRIORITY: 100
 - DUPLICATE: 69

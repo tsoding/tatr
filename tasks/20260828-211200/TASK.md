@@ -1,6 +1,6 @@
-# Mass updating tasks by a query
+# Mass updating tasks by a query (`tatr-untag`)
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 120
 - TAGS: scope,stream
 

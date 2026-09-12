@@ -2,7 +2,7 @@
 
 - STATUS: OPEN
 - PRIORITY: 100
-- TAGS: scope
+- TAGS:
 
 Some sort of flag for `tatr-ls` and `tatr-summary`. Not sure how it
 should play out with `-c` flag of the corresponding commands.
