@@ -146,10 +146,14 @@ void render_task_md(Task task, String_Builder *sb)
     sb_appendf(sb, "\n");
     da_foreach(Property, property, &task.properties) {
         if (sv_eq(property->key, SVLIT("TAGS"))) {
-            sb_appendf(sb, "- TAGS: ");
+            sb_appendf(sb, "- TAGS:");
             bool first = true;
             da_foreach(String_View, tag, &task.tags) {
-                if (!first) sb_appendf(sb, ",");
+                if (first) {
+                    sb_appendf(sb, " ");
+                } else {
+                    sb_appendf(sb, ",");
+                }
                 sb_appendf(sb, SV_Fmt, SV_Arg(*tag));
                 first = false;
             }
