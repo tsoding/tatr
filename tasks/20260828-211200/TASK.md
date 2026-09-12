@@ -48,3 +48,5 @@ I'm still not sure how the whole system reacts to duplicated properties.
 ---
 
 Interestingly we never really defined well the format of the properties in general. So it's a rather a spec gap right now.
+
+Added some info about `[other properties]` to The Spec.

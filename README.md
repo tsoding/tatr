@@ -54,21 +54,28 @@ The format of `TASK.md`:
 - STATUS: (OPEN|CLOSED)
 - PRIORITY: <number>
 - TAGS: <comma-and-whitespace-separated-list-of-tags>
+[other properties]
 
 [description]
 ```
+
+As you work on the task feel free to append any discovered details about the task to the `[description]`.
+
+Use [git-blame](https://git-scm.com/docs/git-blame) and [git-log](https://git-scm.com/docs/git-log) to learn about when, how and by whom any changes to the task were made.
+
+#### Task Properties
 
 The `STATUS` property defines whether the task is done or not. There could be only two statuses. If you need more it is generally recommended to use `TAGS` for whatever you are trying to do.
 
 The `PRIORITY` is generally used for sorting the tasks by the external tools. One thing I've seen people online do is stressing out about what priority to put. Don't think of priority as an absolute value. Think of it as the means of getting your list of tasks sorted in a specific way you want them to see.
 
-The `TAGS` property contains the list of tags separated by commas and whitespaces. `TAGS: foo,bar,baz` defines 3 tags. `TAGS: foo, hello  world` also defines 3 tags. You can use these tags to group tasks into categories. Like `bug` or `enhancement`.
+The `TAGS` property contains the list of tags separated by commas and whitespaces. `TAGS: foo,bar,baz` defines 3 tags. `TAGS: foo,,, hello  world` also defines 3 tags. You can use these tags to group tasks into categories. Like `bug` or `enhancement`.
 
-As you work on the task feel free to append any discovered details about the task to the description.
+We allow to specify `[other properties]` (in addition to `STATUS`, `PRIORITY`, and `TAGS`) in a similar format (that is `- [NAME]: VALUE`), the official tool will ignore them but try its best to not disturb them too much during any mass update operations (like `tatr-untag`, etc).
 
-Use [git-blame](https://git-scm.com/docs/git-blame) and [git-log](https://git-scm.com/docs/git-log) to learn about when, how and by whom any changes to the task were made.
+Duplicated properties are not allowed. If a tasks specifies duplicated properties only the last value must be taken into account. Mass update operations of the official tool will remove any duplicated properties.
 
-### Tag descriptions
+### Tags description file
 
 There might be an optional `tasks/tags` file with the following format:
 
