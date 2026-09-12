@@ -9,3 +9,5 @@ Grep for refs.
 Introduced by TASK(20260828-211200).
 
 We need to keep track of the property locations for that.
+
+Same should be applied to all the other mass update commands.

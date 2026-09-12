@@ -6,25 +6,13 @@
 
 ## Scope of the task
 
-Adding everything with priority 100 and higher to the scope:
-
-```console
-$ tatr tag -t scope priority gte 100
-```
-
 Removing everything from the scope:
 
 ```console
-$ tatr untag -t scope .scope
+$ tatr untag -t scope :scope
 ```
 
-Closing all the bugs:
-
-```console
-$ tatr close .bug
-```
-
-Only these commands for now. In the future we may add more as part of
+Only this command for now. In the future we may add more as part of
 separate tasks.
 
 ## Keeping the properties intact as we are modifying them
@@ -52,3 +40,7 @@ Interestingly we never really defined well the format of the properties in gener
 ---
 
 Added some info about `[other properties]` to The Spec.
+
+---
+
+I think this part of the Task is closed. This is how we are treating the properties from now on.
