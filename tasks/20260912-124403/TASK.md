@@ -23,3 +23,7 @@ I'm thinking about extending TQL with `OP_ID` which is compiled from a keyword t
 ---
 
 I just realized that TQL expression like `20260912-125818 or 20260912-125912` will be absolutely valid and will match two tasks. In fact you will be able to match any amount of specific tasks this way. Awesome!
+
+---
+
+Because of that `tatr ls 20260912-125818` and `tatr find 20260912-125818` become equivalent which turns `tatr-find` kind obsolete.
