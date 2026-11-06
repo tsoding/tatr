@@ -20,3 +20,7 @@ But I'm not sure. This is just a rough idea.
 ---
 
 Another idea is maybe do that through flags, but a single `tatr-todo` creates a bunch of tasks for which you may not want to have the same tag and priority, but who knows.
+
+---
+
+I just quickly added `-t` flag from `tatr-new` cause I needed it. I guess we are moving in that direction...

@@ -518,10 +518,12 @@ void lines_concat(Lines lines, String_Builder *sb, String_View sep)
 
 bool todo_run(Command *self, const char *program_name, int argc, char **argv)
 {
+    Flag_List tags_from_flags = {0};
     char *id_suffix = NULL;
     bool help = false;
 
     void *c = flag_c_new(program_name);
+    flag_c_list_var(c, &tags_from_flags, "t", "Tags to add to the new task");
     flag_c_str_var(c, &id_suffix, "s", NULL, "Task ID optional suffix");
     flag_c_bool_var(c, &help, "help", false, "Print this help message");
 
@@ -545,6 +547,15 @@ bool todo_run(Command *self, const char *program_name, int argc, char **argv)
         print_command_usage(stderr, self, program_name, c);
         fprintf(stderr, "ERROR: no files were provided\n");
         return false;
+    }
+
+    Parsed_Tags parsed_tags = {0};
+    da_foreach(const char *, tags_cstr, &tags_from_flags) {
+        String_View unparsed_tags = sv_from_cstr(*tags_cstr);
+        String_View tag = {0};
+        while (unparsed_tags_next(&unparsed_tags, &tag)) {
+            da_append(&parsed_tags, tag);
+        }
     }
 
     char *dir_path = find_relative_tasks_directory();
@@ -615,7 +626,6 @@ bool todo_run(Command *self, const char *program_name, int argc, char **argv)
                 }
             }
 
-            Parsed_Tags parsed_tags = {0};
             char *id = create_new_task(dir_path, id_suffix, title, DEFAULT_PRIORITY, parsed_tags);
             if (id == NULL) {
                 return false;
