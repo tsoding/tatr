@@ -649,11 +649,13 @@ bool new_run(Command *self, const char *program_name, int argc, char **argv)
     bool help = false;
     uint64_t priority = 0;
     char *id_suffix = NULL;
+    bool yes = false;
 
     void *c = flag_c_new(program_name);
     flag_c_list_var(c, &tags_from_flags, "t", "Tags to add to the new task");
     flag_c_uint64_var(c, &priority, "p", DEFAULT_PRIORITY, "Priority of the new task");
     flag_c_str_var(c, &id_suffix, "s", NULL, "Task ID optional suffix");
+    flag_c_bool_var(c, &yes, "y", false, "Always answer 'y' to any prompts of this command");
     flag_c_bool_var(c, &help, "help", false, "Print this help message");
     String_Builder sb_title = {0};
 
@@ -691,6 +693,26 @@ bool new_run(Command *self, const char *program_name, int argc, char **argv)
         while (unparsed_tags_next(&unparsed_tags, &tag)) {
             da_append(&parsed_tags, tag);
         }
+    }
+
+    Tasks tasks = {0};
+    if (!load_tasks(&tasks, dir_path)) return false;
+
+    if (!yes) {
+        da_foreach(Task, task, &tasks) {
+            if (sv_eq(task->title, title)) {
+                static Prompt_Option options[] = {
+                    { .c = 'y', .description = "yes"  },
+                    { .c = 'n', .description = "no"   },
+                };
+                const char *prompt = temp_sprintf("Task with this exact title already exists (%s). Create it anyway?", task->id);
+                switch (user_prompt(prompt, options, ARRAY_LEN(options))) {
+                case 'y': goto create_it_anyway;
+                case 'n': return true;
+                default: UNREACHABLE("user_prompt");
+                }
+            }
+        } create_it_anyway: {}
     }
 
     if (!create_new_task(dir_path, id_suffix, title, priority, parsed_tags)) return false;

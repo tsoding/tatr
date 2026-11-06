@@ -1,8 +1,8 @@
 # Accidental double `tatr new` in Emacs
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 200
-- TAGS: bug,scope
+- TAGS: bug
 
 There is a weird UX problem I keep experiencing in Emacs' compilation
 mode with `tatr new`. I have a habit of switching to `*compilation*`
