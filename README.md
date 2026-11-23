@@ -107,7 +107,7 @@ You are welcome to make your own tools.
 
 ### Environment Variables
 
-- `TATR_EDITOR` -- command line that the tool will use to open up an external
+- `TATR_EDITOR` — command line that the tool will use to open up an external
   text editor. If unset it will check `EDITOR`. And if it is unset too it will
   just try to execute `vi`. If even `vi` fails it's your fault now.
   <!-- This logic is implement at NOTE(20261123-222222) -->
