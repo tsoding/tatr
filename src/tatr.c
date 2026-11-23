@@ -16,6 +16,7 @@
 #include "nob.h"
 #include "flag.h"
 #include "ht.h"
+#include "shlex.h"
 
 #include "path.h"
 #include "huid.h"
@@ -516,6 +517,30 @@ void lines_concat(Lines lines, String_Builder *sb, String_View sep)
     }
 }
 
+bool open_files_in_editor(File_Paths files)
+{
+    bool result = true;
+    Cmd cmd = {0};
+    Shlex shlex = {0};
+    const char *editor = NULL;
+    // If you update this place don't forget to update NOTE(20261123-222222)
+    if (!editor) editor = getenv("TATR_EDITOR");
+    if (!editor) editor = getenv("EDITOR");
+    if (!editor) editor = "vi";
+    shlex_init(&shlex, editor, editor + strlen(editor));
+    while (shlex_next(&shlex)) {
+        cmd_append(&cmd, temp_strdup(shlex.string));
+    }
+    da_foreach(const char *, file, &files) {
+        cmd_append(&cmd, *file);
+    }
+    if (!cmd_run(&cmd)) return_defer(false);
+defer:
+    free(cmd.items);
+    shlex_free(&shlex);
+    return result;
+}
+
 bool todo_run(Command *self, const char *program_name, int argc, char **argv)
 {
     Flag_List tags_from_flags = {0};
@@ -567,6 +592,7 @@ bool todo_run(Command *self, const char *program_name, int argc, char **argv)
 
     String_View tag = SVLIT("TO""DO:");
     size_t checkpoint = temp_save();
+    File_Paths files = {0};
     while (argc > 0) {
         temp_rewind(checkpoint);
 
@@ -584,6 +610,7 @@ bool todo_run(Command *self, const char *program_name, int argc, char **argv)
 
         bool yes_entire_file = false;
         for (size_t i = 0; i < lines.count; ++i) {
+            bool edit = false;
             String_View line = lines.items[i];
             size_t line_number = i + 1;
             int todo_index = sv_find(line, tag);
@@ -611,13 +638,15 @@ bool todo_run(Command *self, const char *program_name, int argc, char **argv)
             if (!yes_entire_file) {
                 static Prompt_Option options[] = {
                     { .c = 'y', .description = "yes"  },
-                    { .c = 'n', .description = "no"   },
+                    { .c = 'e', .description = "yes and open in a text editor"  },
+                    { .c = 'n', .description = "no" },
                     { .c = 'q', .description = "quit" },
                     { .c = 'a', .description = "yes until the end of file" },
                     { .c = 'c', .description = "no until the end of file" },
                 };
                 switch (user_prompt("Create a task from it?", options, ARRAY_LEN(options))) {
                 case 'y': break;
+                case 'e': edit = true; break;
                 case 'n': continue;
                 case 'q': return true;
                 case 'a': yes_entire_file = true; break;
@@ -637,6 +666,12 @@ bool todo_run(Command *self, const char *program_name, int argc, char **argv)
             if (!write_entire_file(file_path, sb_output.items, sb_output.count)) {
                 return false;
             }
+
+            if (edit) {
+                files.count = 0;
+                da_append(&files, temp_sprintf("%s/%s/TASK.md", dir_path, id));
+                open_files_in_editor(files);
+            }
         }
 no_entire_file: {}
     }
@@ -650,12 +685,14 @@ bool new_run(Command *self, const char *program_name, int argc, char **argv)
     uint64_t priority = 0;
     char *id_suffix = NULL;
     bool yes = false;
+    bool edit = false;
 
     void *c = flag_c_new(program_name);
     flag_c_list_var(c, &tags_from_flags, "t", "Tags to add to the new task");
     flag_c_uint64_var(c, &priority, "p", DEFAULT_PRIORITY, "Priority of the new task");
     flag_c_str_var(c, &id_suffix, "s", NULL, "Task ID optional suffix");
     flag_c_bool_var(c, &yes, "y", false, "Always answer 'y' to any prompts of this command");
+    flag_c_bool_var(c, &edit, "e", false, "Open all the created TASK.md-s in a text editor");
     flag_c_bool_var(c, &help, "help", false, "Print this help message");
     String_Builder sb_title = {0};
 
@@ -715,7 +752,14 @@ bool new_run(Command *self, const char *program_name, int argc, char **argv)
         } create_it_anyway: {}
     }
 
-    if (!create_new_task(dir_path, id_suffix, title, priority, parsed_tags)) return false;
+    char *id = create_new_task(dir_path, id_suffix, title, priority, parsed_tags);
+    if (!id) return false;
+
+    if (edit) {
+        File_Paths files = {0};
+        da_append(&files, temp_sprintf("%s/%s/TASK.md", dir_path, id));
+        if (!open_files_in_editor(files)) return false;
+    }
 
     return true;
 }
@@ -1365,3 +1409,5 @@ int main(int argc, char **argv)
 #include "flag.h"
 #define HT_IMPLEMENTATION
 #include "ht.h"
+#define SHLEX_IMPLEMENTATION
+#include "shlex.h"
