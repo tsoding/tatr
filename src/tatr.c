@@ -48,7 +48,7 @@ static inline const char *uc(const char *string)
 }
 
 // Forward declarations
-bool open_files_in_editor(File_Paths files);
+bool open_files_in_editor(File_Paths files, bool force_unlimited);
 
 bool get_current_dir_path(Path *cwd_path)
 {
@@ -452,7 +452,7 @@ bool ls_run(Command *self, const char *program_name, int argc, char **argv)
     }
 
     if (edit) {
-        if (!open_files_in_editor(tasks_matched)) return false;
+        if (!open_files_in_editor(tasks_matched, false)) return false;
     }
 
     return true;
@@ -541,7 +541,7 @@ void lines_concat(Lines lines, String_Builder *sb, String_View sep)
     }
 }
 
-bool open_files_in_editor(File_Paths files)
+bool open_files_in_editor(File_Paths files, bool force_unlimited)
 {
     bool result = true;
     Cmd cmd = {0};
@@ -572,7 +572,9 @@ bool open_files_in_editor(File_Paths files)
             }
         }
 
-        if (!unlimited && files.count >= file_threshold) {
+        if (force_unlimited) unlimited = true;
+
+        if (!unlimited && files.count > file_threshold) {
             static Prompt_Option options[] = {
                 { .c = 'y', .description = "yes"  },
                 { .c = 'n', .description = "no" },
@@ -731,7 +733,10 @@ bool todo_run(Command *self, const char *program_name, int argc, char **argv)
             if (edit) {
                 files.count = 0;
                 da_append(&files, temp_sprintf("%s/%s/TASK.md", dir_path, id));
-                open_files_in_editor(files);
+                // Disabing the limit, because the user was already asked if they want
+                // to open a file. If the threshold is set to 0, this will ask the user
+                // again which is stupid.
+                open_files_in_editor(files, true);
             }
         }
 no_entire_file: {}
@@ -820,7 +825,7 @@ bool new_run(Command *self, const char *program_name, int argc, char **argv)
     if (edit) {
         File_Paths files = {0};
         da_append(&files, temp_sprintf("%s/%s/TASK.md", dir_path, id));
-        if (!open_files_in_editor(files)) return false;
+        if (!open_files_in_editor(files, false)) return false;
     }
 
     return true;
