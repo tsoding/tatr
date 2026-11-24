@@ -69,3 +69,13 @@ query is still brewing in my head.
 `tatr-edit` would require reimplementing the same set of flags as in `tatr-ls`.
 Namely `-c` and `-a` which does feel like a lot of duplication.
 
+---
+
+## Tatr-Editor vs Editor-Tatr modes of operation
+
+The current design goal is to make tatr usable from the compilation mode of Emacs.
+So this is an Editor-Tatr mode of operation. The Editor is primary and it invokes Tatr.
+
+Recent introduction of `-e` flag to `tatr-new` and `tatr-todo` drags the design towards 
+Tatr-Editor mode of operation. Which is why I'm having so much trouble adding `-e` to `tatr-ls`.
+`tatr-ls` is designed for Editor-Tatr.
