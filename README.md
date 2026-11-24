@@ -113,7 +113,7 @@ You are welcome to make your own tools.
   <!-- This logic is implement at NOTE(20261123-222222) -->
 - `TATR_EDITOR_THRESHOLD` — If the tool tries to open too many files it will
   issue a warning asking the user if they really wanna do it. This may happen
-  if you run `tatr ls -e`. By default this threshold is set to 10, but you can
+  if you run `tatr ls -e`. By default this threshold is set to 10, but you can
   control it with this envar. Set it to `unlimited` to completely disable the
   prompt.
   <!-- This logic is implemented at NOTE(20261124-184919) -->
