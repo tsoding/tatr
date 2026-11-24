@@ -63,3 +63,9 @@ Though in that case how do we separate TQL and TUL expressions?
 
 So far I just implemented `tatr-new` and `tatr-todo`. Opening existing TASK.md-s by
 query is still brewing in my head.
+
+---
+
+`tatr-edit` would require reimplementing the same set of flags as in `tatr-ls`.
+Namely `-c` and `-a` which does feel like a lot of duplication.
+
