@@ -1,8 +1,8 @@
 # Automatically open TASK.md in external text editor
 
-- STATUS: OPEN
+- STATUS: CLOSED
 - PRIORITY: 110
-- TAGS: scope
+- TAGS: 
 
 Idea inspired by suggestions from Marijn Stevens over email.
 
@@ -21,7 +21,7 @@ The command line string can be tokenized by https://github.com/tsoding/shlex.h
 
 `tatr todo -e ...`
 
-Open TASK.md after each `y` answer to `tatr-todo` prompt. Or maybe later we could 
+Open TASK.md after each `y` answer to `tatr-todo` prompt. Or maybe later we could
 have an option to open all of them at once when all TODOs a processed.
 
 `tatr ls -e ...`
@@ -29,7 +29,7 @@ have an option to open all of them at once when all TODOs a processed.
 Open all selected TASK.md-s at once in the text editor. This is why the formatting
 string has `%files` parameter. I do not want to open them sequentually because in
 case a blocking editor like command line vim this process becomes uncancellable until
-you visited all the files. And if you selected like 100+ this maybe become very 
+you visited all the files. And if you selected like 100+ this maybe become very
 annoying. In case of `tatr-todo` it is very easy to cancel the process between the file
 visits.
 
@@ -76,6 +76,6 @@ Namely `-c` and `-a` which does feel like a lot of duplication.
 The current design goal is to make tatr usable from the compilation mode of Emacs.
 So this is an Editor-Tatr mode of operation. The Editor is primary and it invokes Tatr.
 
-Recent introduction of `-e` flag to `tatr-new` and `tatr-todo` drags the design towards 
+Recent introduction of `-e` flag to `tatr-new` and `tatr-todo` drags the design towards
 Tatr-Editor mode of operation. Which is why I'm having so much trouble adding `-e` to `tatr-ls`.
 `tatr-ls` is designed for Editor-Tatr.

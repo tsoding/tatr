@@ -99,7 +99,7 @@ $ sudo cp ./build/tatr /usr/local/bin/
 $ tatr help
 ```
 
-It is specifically optimized to be run in compilation mode of Emacs. Not sure how useful it is outside of this use case.
+It is mainly optimized to be run in compilation mode of Emacs. Not sure how useful it is outside of this use case.
 
 We only support Linux right now But I have tasks to add [Windows](./tasks/20260825-170729/TASK.md) and [MacOS](./tasks/20260901-063204/TASK.md) support in the future.
 
@@ -107,10 +107,16 @@ You are welcome to make your own tools.
 
 ### Environment Variables
 
-- `TATR_EDITOR` — command line that the tool will use to open up an external
+- `TATR_EDITOR` — Command line that the tool will use to open up an external
   text editor. If unset it will check `EDITOR`. And if it is unset too it will
   just try to execute `vi`. If even `vi` fails it's your fault now.
   <!-- This logic is implement at NOTE(20261123-222222) -->
+- `TATR_EDITOR_THRESHOLD` — If the tool tries to open too many files it will
+  issue a warning asking the user if they really wanna do it. This may happen
+  if you run `tatr ls -e`. By default this threshold is set to 10, but you can
+  control it with this envar. Set it to `unlimited` to completely disable the
+  prompt.
+  <!-- This logic is implemented at NOTE(20261124-184919) -->
 
 ### Tatr Query Language (TQL)
 

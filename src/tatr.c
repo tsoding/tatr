@@ -31,6 +31,25 @@
 #define DEFAULT_TASK_TITLE "New Task"
 #define DEFAULT_PRIORITY 100
 
+// These macros are referenced in NOTE(20261124-184919)
+#define EDITOR_THRESHOLD_ENVAR_NAME "TATR_EDITOR_THRESHOLD"
+#define EDITOR_DEFAULT_THRESHOLD 10
+
+#define ANSI_RED    "\033[1;31m"
+#define ANSI_CYAN   "\033[36m"
+#define ANSI_YELLOW "\033[1;33m"
+#define ANSI_RESET  "\033[0m"
+
+static bool use_color = false;
+static inline const char *uc(const char *string)
+{
+    if (use_color) return string;
+    return "";
+}
+
+// Forward declarations
+bool open_files_in_editor(File_Paths files);
+
 bool get_current_dir_path(Path *cwd_path)
 {
     const char *cwd_path_cstr = get_current_dir_temp();
@@ -283,6 +302,7 @@ bool ls_run(Command *self, const char *program_name, int argc, char **argv)
     bool help = false;
     bool debug = false;
     bool by_id = false;
+    bool edit = false;
     Flag_List updates_from_flags = {0};
 
     void *c = flag_c_new(program_name);
@@ -290,6 +310,7 @@ bool ls_run(Command *self, const char *program_name, int argc, char **argv)
     flag_c_bool_var(c, &ascending, "a", false, "List tasks in ascending order");
     flag_c_bool_var(c, &by_id, "id", false, "Sort tasks by id");
     flag_c_list_var(c, &updates_from_flags, "update", "Apply update operations on the resulting list");
+    flag_c_bool_var(c, &edit, "e", false, "Open all the found and updated TASK.md-s in a text editor");
     flag_c_bool_var(c, &debug, "debug", false, "Output opcodes of the query for debug purpose");
     flag_c_bool_var(c, &help, "help", false, "Print this help message");
 
@@ -390,7 +411,7 @@ bool ls_run(Command *self, const char *program_name, int argc, char **argv)
 
     Stack stack = {0};
 
-    size_t tasks_matched = 0;
+    File_Paths tasks_matched = {0};
     size_t tasks_updated = 0;
     da_foreach(Task, task, &tasks) {
         String_View status = task->status;
@@ -406,11 +427,11 @@ bool ls_run(Command *self, const char *program_name, int argc, char **argv)
         default:             UNREACHABLE("Task_Match_Result");
         }
 
+        const char *task_md_path = temp_sprintf("%s/%s/TASK.md", dir_path, task->id);
         if (update_task(task, update)) {
             String_View update_src = sv_trim(sb_to_sv(sb_updates_src));
             String_Builder task_md_content = {0};
             render_task_md(*task, &task_md_content, NULL);
-            const char *task_md_path = temp_sprintf("%s/%s/TASK.md", dir_path, task->id);
             if (!write_entire_file(task_md_path, task_md_content.items, task_md_content.count)) return false;
             print_task_report(dir_path, task, update_src);
             tasks_updated += 1;
@@ -418,17 +439,20 @@ bool ls_run(Command *self, const char *program_name, int argc, char **argv)
             print_task_report(dir_path, task, SVNULL);
         }
 
-        tasks_matched += 1;
+        da_append(&tasks_matched, task_md_path);
     }
 
-    if (tasks_matched == 0) {
+    if (tasks_matched.count == 0) {
         printf("No tasks were found\n");
         return true;
     }
 
     if (tasks_updated > 0) {
         printf("%zu tasks where updated\n", tasks_updated);
-        return true;
+    }
+
+    if (edit) {
+        if (!open_files_in_editor(tasks_matched)) return false;
     }
 
     return true;
@@ -522,11 +546,52 @@ bool open_files_in_editor(File_Paths files)
     bool result = true;
     Cmd cmd = {0};
     Shlex shlex = {0};
-    const char *editor = NULL;
+    String_Builder prompt = {0};
+
+    if (files.count == 0) return_defer(true);
+
     // If you update this place don't forget to update NOTE(20261123-222222)
+    const char *editor = NULL;
     if (!editor) editor = getenv("TATR_EDITOR");
     if (!editor) editor = getenv("EDITOR");
     if (!editor) editor = "vi";
+
+    {
+        // If you change this logic don't forget to change NOTE(20261124-184919)
+        const char *file_threshold_string = getenv(EDITOR_THRESHOLD_ENVAR_NAME);
+        bool unlimited = false;
+        unsigned long long file_threshold = EDITOR_DEFAULT_THRESHOLD;
+        if (file_threshold_string) {
+            unlimited = strcmp(file_threshold_string, "unlimited") == 0;
+            if (!unlimited) {
+                char *endptr = NULL;
+                file_threshold = strtoull(file_threshold_string, &endptr, 10);
+                if (endptr == file_threshold_string) {
+                    file_threshold = EDITOR_DEFAULT_THRESHOLD;
+                }
+            }
+        }
+
+        if (!unlimited && files.count >= file_threshold) {
+            static Prompt_Option options[] = {
+                { .c = 'y', .description = "yes"  },
+                { .c = 'n', .description = "no" },
+                { .c = 'q', .description = "also no" },
+            };
+            sb_appendf(&prompt, "%sWARNING!%s ", uc(ANSI_YELLOW), uc(ANSI_RESET));
+            sb_appendf(&prompt, "You are about to open %s%zu%s files using `%s`.\n", uc(ANSI_RED), files.count, uc(ANSI_RESET), editor);
+            sb_appendf(&prompt, "The threshold for this prompt appearing is set to %s%lld%s.\n", uc(ANSI_RED), file_threshold, uc(ANSI_RESET));
+            sb_appendf(&prompt, "You can change it by setting the %s%s%s environment variable.\n", uc(ANSI_CYAN), EDITOR_THRESHOLD_ENVAR_NAME, uc(ANSI_RESET));
+            sb_appendf(&prompt, "Are you sure you want to open this many files at once?");
+            sb_append_null(&prompt);
+            switch (user_prompt(temp_sprintf(prompt.items, files.count, file_threshold, EDITOR_THRESHOLD_ENVAR_NAME), options, ARRAY_LEN(options))) {
+                case 'y': break;
+                case 'n': case 'q': return_defer(true);
+                default: UNREACHABLE("user_prompt");
+            }
+        }
+    }
+
     shlex_init(&shlex, editor, editor + strlen(editor));
     while (shlex_next(&shlex)) {
         cmd_append(&cmd, temp_strdup(shlex.string));
@@ -535,8 +600,10 @@ bool open_files_in_editor(File_Paths files)
         cmd_append(&cmd, *file);
     }
     if (!cmd_run(&cmd)) return_defer(false);
+
 defer:
     free(cmd.items);
+    free(prompt.items);
     shlex_free(&shlex);
     return result;
 }
@@ -551,8 +618,6 @@ bool todo_run(Command *self, const char *program_name, int argc, char **argv)
     flag_c_list_var(c, &tags_from_flags, "t", "Tags to add to the new task");
     flag_c_str_var(c, &id_suffix, "s", NULL, "Task ID optional suffix");
     flag_c_bool_var(c, &help, "help", false, "Print this help message");
-
-    bool use_color = isatty(STDOUT_FILENO);
 
     if (!flag_c_parse(c, argc, argv)) {
         print_command_usage(stderr, self, program_name, c);
@@ -625,11 +690,7 @@ bool todo_run(Command *self, const char *program_name, int argc, char **argv)
                 if (j < 0) continue;
                 if (j >= (long)lines.count) continue;
                 if (j == (long)i) {
-                    if (use_color) {
-                        printf(SV_Fmt "\033[1;31mTODO\033[0m:\033[36m" SV_Fmt "\033[0m\n", SV_Arg(prefix), SV_Arg(suffix));
-                    } else {
-                        printf(SV_Fmt "TO""DO:" SV_Fmt "\n", SV_Arg(prefix), SV_Arg(suffix));
-                    }
+                    printf(SV_Fmt"%sTODO%s:%s"SV_Fmt"%s\n", SV_Arg(prefix), uc(ANSI_RED), uc(ANSI_RESET), uc(ANSI_CYAN), SV_Arg(suffix), uc(ANSI_RESET));
                 } else {
                     printf(SV_Fmt"\n", SV_Arg(lines.items[j]));
                 }
@@ -692,7 +753,7 @@ bool new_run(Command *self, const char *program_name, int argc, char **argv)
     flag_c_uint64_var(c, &priority, "p", DEFAULT_PRIORITY, "Priority of the new task");
     flag_c_str_var(c, &id_suffix, "s", NULL, "Task ID optional suffix");
     flag_c_bool_var(c, &yes, "y", false, "Always answer 'y' to any prompts of this command");
-    flag_c_bool_var(c, &edit, "e", false, "Open all the created TASK.md-s in a text editor");
+    flag_c_bool_var(c, &edit, "e", false, "Open the created TASK.md in a text editor");
     flag_c_bool_var(c, &help, "help", false, "Print this help message");
     String_Builder sb_title = {0};
 
@@ -741,11 +802,12 @@ bool new_run(Command *self, const char *program_name, int argc, char **argv)
                 static Prompt_Option options[] = {
                     { .c = 'y', .description = "yes"  },
                     { .c = 'n', .description = "no"   },
+                    { .c = 'q', .description = "also no"   },
                 };
-                const char *prompt = temp_sprintf("Task with this exact title already exists (%s). Create it anyway?", task->id);
+                const char *prompt = temp_sprintf("%sWARNING!%s Task with this exact title already exists (%s%s%s). Create anyway?", uc(ANSI_YELLOW), uc(ANSI_RESET), uc(ANSI_CYAN), task->id, uc(ANSI_RESET));
                 switch (user_prompt(prompt, options, ARRAY_LEN(options))) {
                 case 'y': goto create_it_anyway;
-                case 'n': return true;
+                case 'n': case 'q': return true;
                 default: UNREACHABLE("user_prompt");
                 }
             }
@@ -1362,6 +1424,8 @@ bool help_run(Command *self, const char *program_name, int argc, char **argv)
 int main(int argc, char **argv)
 {
 #ifndef TASKS_TEST
+    use_color = isatty(STDOUT_FILENO);
+
     const char *program_name = shift(argv, argc);
 
     if (argc <= 0) {

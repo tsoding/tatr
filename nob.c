@@ -356,7 +356,7 @@ int main(int argc, char **argv)
     if (run) {
         if (debug) cmd_append(&cmd, "gf2");
         cmd_append(&cmd, BUILD_FOLDER"tatr");
-        da_append_many(&cmd, argv, argc);
+        if (!debug) da_append_many(&cmd, argv, argc);
         if (!cmd_run(&cmd)) return false;
     }
 
